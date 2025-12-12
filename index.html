@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Portal | By Deepan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+            --primary-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent-color: #764ba2;
+            --text-main: #2d3436;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+            min-height: 100vh;
+            color: var(--text-main);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Glass Components --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .view-section { display: none; opacity: 0; transition: opacity 0.4s ease; }
+        .view-section.active { display: block; opacity: 1; animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+
+        /* --- Login --- */
+        .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { width: 100%; max-width: 420px; padding: 50px 40px; }
+        
+        .form-control-glass {
+            background: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 12px;
+            padding: 15px;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+        .form-control-glass:focus {
+            background: #fff;
+            box-shadow: 0 0 15px rgba(118, 75, 162, 0.15);
+            border-color: var(--accent-color);
+            outline: none;
+        }
+
+        .btn-gradient {
+            background: var(--primary-grad);
+            border: none;
+            color: white;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+        .btn-gradient:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3); }
+
+        /* --- Dashboard --- */
+        .nav-glass {
+            background: rgba(255,255,255,0.9);
+            padding: 15px 30px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .test-card { padding: 25px; height: 100%; position: relative; }
+        .test-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        
+        /* --- CBT --- */
+        .cbt-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; height: calc(100vh - 120px); }
+        .q-area { overflow-y: auto; padding: 30px; display: flex; flex-direction: column; }
+        .p-area { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; }
+        
+        .opt-btn {
+            display: block; width: 100%; text-align: left;
+            background: white; border: 2px solid #eff0f6;
+            padding: 16px 20px; margin-bottom: 12px;
+            border-radius: 12px; font-weight: 500;
+            transition: 0.2s; cursor: pointer;
+        }
+        .opt-btn:hover { border-color: #d6d9e4; background: #fcfcfd; }
+        .opt-btn.selected {
+            border-color: var(--accent-color);
+            background: rgba(118, 75, 162, 0.05);
+            color: var(--accent-color);
+            font-weight: 600;
+            position: relative;
+        }
+        .opt-btn.selected::after {
+            content: "\F26A"; font-family: "Bootstrap Icons";
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+        }
+
+        .timer-badge {
+            font-size: 1.8rem; font-weight: 700;
+            background: #fff; padding: 10px;
+            border-radius: 12px; text-align: center;
+            color: var(--accent-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* --- Solutions View --- */
+        .solution-card {
+            background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px;
+            border-left: 6px solid #00b894; box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        .correct-answer-box {
+            background: #d1e7dd; color: #0f5132; padding: 12px;
+            border-radius: 10px; margin-top: 15px; font-weight: 600;
+        }
+
+        /* --- Status Dots --- */
+        .status-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .s-dot {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 0.9rem;
+            color: white; cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        .s-dot:hover { transform: scale(1.15); }
+        .st-u { background: #e0e0e0; color: #555; }
+        .st-a { background: #00b894; }
+        .st-r { background: #ff7675; }
+        .st-s { background: #6c5ce7; }
+
+        /* --- Loader --- */
+        #loader {
+            position: fixed; inset: 0;
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(5px);
+            z-index: 10000; display: flex; justify-content: center; align-items: center;
+        }
+        .hourglass {
+            width: 60px; height: 60px;
+            animation: hourglass 2s infinite ease-in-out;
+        }
+        @keyframes hourglass {
+            0% { transform: rotate(0deg); clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); background: var(--accent-color); }
+            50% { transform: rotate(180deg); clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); background: #667eea; }
+            100% { transform: rotate(360deg); clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); background: var(--accent-color); }
+        }
+
+        /* --- Modal --- */
+        .modal-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            border: none;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        }
+
+        @media(max-width: 768px) {
+            .cbt-grid { grid-template-columns: 1fr; height: auto; }
+            .p-area { order: -1; max-height: 250px; }
+            .q-area { min-height: 500px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="d-none">
+        <div class="text-center">
+            <div class="hourglass mx-auto mb-3"></div>
+            <h6 class="text-muted fw-bold">LOADING...</h6>
+        </div>
+    </div>
+
+    <div id="login-view" class="view-section active">
+        <div class="login-wrapper">
+            <div class="glass-panel login-card">
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold mb-1">Student Portal</h2>
+                    <p class="text-muted">Enter credentials to continue</p>
+                </div>
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="small text-uppercase fw-bold text-muted ms-1">Username</label>
+                        <input type="text" id="username" class="form-control-glass w-100" placeholder="e.g. student123" required>
+                    </div>
+                    <div class="mb-4 position-relative">
+                        <label class="small text-uppercase fw-bold text-muted ms-1">Password</label>
+                        <input type="password" id="password" class="form-control-glass w-100" placeholder="••••••••" required>
+                        <i class="bi bi-eye position-absolute" id="eyeToggle" 
+                           style="right: 15px; bottom: 15px; cursor: pointer; color:#888;" 
+                           onclick="togglePass()"></i>
+                    </div>
+                    <button type="submit" class="btn-gradient w-100 shadow-sm">
+                        SECURE LOGIN <i class="bi bi-arrow-right-short"></i>
+                    </button>
+                    <div id="loginError" class="alert alert-danger mt-3 small border-0 text-center" style="display:none;">Invalid Credentials</div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="view-section">
+        <nav class="nav-glass">
+            <h4 class="m-0 fw-bold"><i class="bi bi-grid-fill text-primary"></i> Dashboard</h4>
+            <div class="d-flex align-items-center gap-3">
+                <span class="d-none d-md-block fw-bold text-muted">Welcome, <span id="dashName" class="text-dark">User</span></span>
+                <button onclick="logout()" class="btn btn-outline-danger rounded-pill px-4 btn-sm fw-bold">Logout</button>
+            </div>
+        </nav>
+        
+        <div class="container pb-5">
+            <div class="glass-panel p-4 mb-4 bg-white d-flex align-items-center justify-content-between">
+                <div>
+                    <h2 class="fw-bold">Hello, <span id="welcomeName" style="color:var(--accent-color)">Student</span>!</h2>
+                    <p class="text-muted mb-0">Select a test below to begin your assessment.</p>
+                </div>
+                <i class="bi bi-mortarboard-fill text-muted opacity-25" style="font-size: 3rem;"></i>
+            </div>
+
+            <div class="row g-4 mb-5" id="analyticsRow">
+                <div class="col-md-8">
+                    <div class="glass-panel p-4 bg-white h-100">
+                        <h6 class="fw-bold text-uppercase text-muted mb-3">Performance Trend</h6>
+                        <canvas id="historyChart" style="max-height: 200px;"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-panel p-4 bg-white h-100">
+                        <h6 class="fw-bold text-uppercase text-uppercase text-muted mb-3">Accuracy</h6>
+                        <canvas id="accuracyChart" style="max-height: 200px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="fw-bold mb-3 ms-2">Available Tests</h5>
+            <div class="row g-4" id="testList">
+                </div>
+        </div>
+    </div>
+
+    <div id="test-view" class="view-section">
+        <div class="container-fluid pt-3">
+            <div class="glass-panel bg-white cbt-grid">
+                
+                <div class="q-area">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                            <i class="bi bi-journal-text"></i> <span id="testTitleDisplay">Test</span>
+                        </span>
+                        <button class="btn btn-warning btn-sm text-white fw-bold shadow-sm rounded-pill px-3" onclick="markReview()">
+                            <i class="bi bi-flag-fill"></i> Review
+                        </button>
+                    </div>
+
+                    <div class="flex-grow-1 d-flex flex-column justify-content-center">
+                        <h5 class="text-muted mb-2">Question <span id="qNum">1</span></h5>
+                        <h4 class="fw-bold mb-4 lh-base" id="qText">Question text?</h4>
+                        <div id="optionsContainer">
+                            </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                        <button class="btn btn-light border px-4 rounded-pill fw-bold" onclick="navQ(-1)">Previous</button>
+                        <button class="btn-gradient px-5 rounded-pill" onclick="navQ(1)">Next Question</button>
+                    </div>
+                </div>
+
+                <div class="p-area border-start">
+                    <div class="timer-badge">
+                        <i class="bi bi-stopwatch"></i> <span id="timerDisplay">00:00</span>
+                    </div>
+                    
+                    <h6 class="text-muted fw-bold small text-uppercase mb-3">Question Palette</h6>
+                    <div id="paletteGrid" class="status-grid flex-grow-1 align-content-start">
+                        </div>
+
+                    <div class="mt-3">
+                        <button class="btn btn-success w-100 py-3 rounded-xl fw-bold shadow-lg" onclick="openSubmitModal()">
+                            SUBMIT TEST
+                        </button>
+                        <div class="row g-2 mt-3 text-center" style="font-size: 0.7rem;">
+                            <div class="col-3"><span class="badge bg-success w-100">Done</span></div>
+                            <div class="col-3"><span class="badge bg-danger w-100">Review</span></div>
+                            <div class="col-3"><span class="badge px-1" style="background:#6c5ce7; color:white;">Skipped</span></div>
+                            <div class="col-3"><span class="badge bg-light text-dark border w-100">New</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-view" class="view-section">
+        <div class="login-wrapper">
+            <div class="glass-panel bg-white text-center p-5" style="max-width: 600px;">
+                <div class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h2 class="fw-bold">Test Completed!</h2>
+                <p class="text-muted">Your results have been recorded.</p>
+                
+                <div class="row mt-4 mb-4 g-2">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3">
+                            <h3 class="fw-bold text-primary m-0" id="resTotal">0</h3>
+                            <small class="text-muted">Total</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3">
+                            <h3 class="fw-bold text-dark m-0" id="resAtt">0</h3>
+                            <small class="text-muted">Attempted</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3">
+                            <h3 class="fw-bold text-success m-0" id="resCorrect">0</h3>
+                            <small class="text-muted">Correct</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3">
+                            <h3 class="fw-bold text-danger m-0" id="resIncorrect">0</h3>
+                            <small class="text-muted">Wrong</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn-gradient w-100" onclick="exitToDash()">Back to Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="solutions-view" class="view-section">
+        <nav class="nav-glass">
+            <h4 class="m-0 fw-bold"><i class="bi bi-journal-check text-success"></i> Solutions</h4>
+            <button onclick="loadDashboard()" class="btn btn-outline-dark rounded-pill px-4 fw-bold">Close</button>
+        </nav>
+        <div class="container pb-5" id="solutionsContainer">
+            </div>
+    </div>
+
+    <div class="modal fade" id="submitModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-glass p-3">
+                <div class="modal-body text-center">
+                    <i class="bi bi-question-circle-fill text-warning mb-3" style="font-size: 3rem;"></i>
+                    <h4 class="fw-bold">Submit Test?</h4>
+                    <p class="text-muted">You are about to finish the test. This cannot be undone.</p>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <button class="btn btn-light px-4 rounded-pill fw-bold" data-bs-dismiss="modal">Cancel</button>
+                        <button class="btn btn-success px-5 rounded-pill fw-bold shadow-lg" onclick="confirmSubmit()">Yes, Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // *** CONFIGURATION ***
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxARubiXML6TTa6RxOi-jEPssSrTMYFFhfV4TysgvuRPcFmOYOxx1aLnUL2VG8ksOk/exec'; // <--- PASTE YOUR URL HERE
+
+        // *** STATE MANAGEMENT ***
+        let appState = {
+            user: null,
+            view: 'login-view',
+            testData: [],
+            history: [],
+            activeTest: null,
+            answers: {},
+            status: {},
+            currentQ: 0,
+            timerEnd: null
+        };
+
+        const loader = document.getElementById('loader');
+        let timerInt;
+
+        window.addEventListener('load', restoreSession);
+
+        function saveSession() { localStorage.setItem('cbt_app_state_v3', JSON.stringify(appState)); }
+        function restoreSession() {
+            const stored = localStorage.getItem('cbt_app_state_v3');
+            if(stored) {
+                try {
+                    appState = JSON.parse(stored);
+                    if(appState.user) {
+                        if(appState.view === 'test-view') { loadView('test-view'); resumeTestUI(); }
+                        else loadDashboard(true);
+                    } else loadView('login-view');
+                } catch(e) { loadView('login-view'); }
+            } else loadView('login-view');
+        }
+
+        function loadView(id) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            appState.view = id;
+            if(id !== 'test-view') saveSession();
+        }
+
+        function toggleLoader(show) { show ? loader.classList.remove('d-none') : loader.classList.add('d-none'); }
+
+        // --- LOGIN ---
+        function togglePass() {
+            const inp = document.getElementById('password');
+            const icon = document.getElementById('eyeToggle');
+            if(inp.type === 'password') { inp.type = 'text'; icon.classList.replace('bi-eye', 'bi-eye-slash'); }
+            else { inp.type = 'password'; icon.classList.replace('bi-eye-slash', 'bi-eye'); }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', e => {
+            e.preventDefault();
+            toggleLoader(true);
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            fetch(`${SCRIPT_URL}?action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`)
+            .then(res => res.json()).then(data => {
+                toggleLoader(false);
+                if(data.status && data.status !== 'error') {
+                    appState.user = data;
+                    saveSession();
+                    loadDashboard();
+                } else document.getElementById('loginError').style.display = 'block';
+            });
+        });
+
+        function logout() { localStorage.removeItem('cbt_app_state_v3'); location.reload(); }
+
+        // --- DASHBOARD ---
+        function loadDashboard(silent = false) {
+            if(!silent) toggleLoader(true);
+            loadView('dashboard-view');
+            document.getElementById('dashName').innerText = appState.user.name;
+            document.getElementById('welcomeName').innerText = appState.user.name;
+
+            fetch(`${SCRIPT_URL}?action=getDashboardData&username=${appState.user.username}`)
+            .then(res => res.json()).then(data => {
+                appState.testData = data.tests;
+                appState.history = data.history;
+                saveSession();
+                renderDashItems();
+                renderCharts();
+                if(!silent) toggleLoader(false);
+            });
+        }
+
+        function renderDashItems() {
+            const list = document.getElementById('testList');
+            list.innerHTML = '';
+            
+            appState.testData.forEach(test => {
+                const attempts = appState.history.filter(h => h.testName === test.testName);
+                const isDone = attempts.length > 0;
+                let html = '';
+
+                if(!isDone) {
+                    html = `
+                    <div class="col-md-6 animate-up">
+                        <div class="glass-panel test-card bg-white">
+                            <span class="badge bg-danger position-absolute top-0 end-0 m-3 shadow-sm">NEW</span>
+                            <h5 class="fw-bold text-primary">${test.testName}</h5>
+                            <p class="text-muted small mb-3"><i class="bi bi-calendar"></i> ${test.testDate}</p>
+                            <div class="d-flex gap-2 mb-3">
+                                <span class="badge bg-light text-dark border"><i class="bi bi-clock"></i> ${test.time}m</span>
+                                <span class="badge bg-light text-dark border">${test.questions} Qs</span>
+                            </div>
+                            <button class="btn-gradient w-100" onclick="prepareTest('${test.testName}')">START TEST</button>
+                        </div>
+                    </div>`;
+                } else {
+                    const last = attempts[attempts.length-1];
+                    html = `
+                    <div class="col-md-6 animate-up">
+                        <div class="glass-panel test-card bg-white" style="border-left:5px solid #00b894;">
+                            <div class="d-flex justify-content-between">
+                                <h5 class="fw-bold text-success">${test.testName}</h5>
+                                <i class="bi bi-check-circle-fill text-success h5"></i>
+                            </div>
+                            <p class="text-muted small">Score: <strong>${last.marks}</strong> | Att: ${last.attempted || 0}</p>
+                            <div class="mt-4 d-flex gap-2">
+                                <button class="btn btn-outline-primary flex-grow-1 rounded-pill btn-sm" onclick="prepareTest('${test.testName}')">Retake</button>
+                                <button class="btn btn-success flex-grow-1 rounded-pill btn-sm" onclick="viewSolutions('${test.testName}')">Solutions</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+                list.innerHTML += html;
+            });
+        }
+
+        function renderCharts() {
+            if(appState.history.length === 0) { document.getElementById('analyticsRow').style.display='none'; return; }
+            document.getElementById('analyticsRow').style.display='flex';
+
+            const first = appState.history[0];
+            if(window.accChart) window.accChart.destroy();
+            window.accChart = new Chart(document.getElementById('accuracyChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Correct','Wrong'],
+                    datasets: [{ data: [first.correct, first.incorrect], backgroundColor:['#00b894','#ff7675'], borderWidth:0}]
+                },
+                options: { cutout: '75%', plugins:{legend:{position:'bottom'}} }
+            });
+
+            const labels = appState.history.map(h => h.testName.substr(0,8)+'..');
+            const data = appState.history.map(h => h.marks);
+            if(window.histChart) window.histChart.destroy();
+            window.histChart = new Chart(document.getElementById('historyChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{ 
+                        label: 'Score', data: data, 
+                        borderColor: '#6c5ce7', backgroundColor: 'rgba(108, 92, 231, 0.1)', 
+                        fill: true, tension: 0.4, pointRadius: 4 
+                    }]
+                },
+                options: { scales:{y:{beginAtZero:true}}, plugins:{legend:{display:false}} }
+            });
+        }
+
+        // --- SOLUTIONS ---
+        function viewSolutions(testName) {
+            toggleLoader(true);
+            const meta = appState.testData.find(t => t.testName === testName);
+            
+            fetch(`${SCRIPT_URL}?action=getQuestions&sheetName=${meta.link}`)
+            .then(res => res.json()).then(qs => {
+                toggleLoader(false);
+                loadView('solutions-view');
+                const con = document.getElementById('solutionsContainer');
+                con.innerHTML = `<div class="text-center mb-4"><h3 class="fw-bold">${testName}</h3><p class="text-muted">Detailed Solutions</p></div>`;
+                
+                qs.forEach((q, idx) => {
+                    con.innerHTML += `
+                    <div class="solution-card">
+                        <div class="d-flex gap-2">
+                            <span class="badge bg-primary h-100">Q${idx+1}</span>
+                            <h6 class="fw-bold lh-base">${q.q}</h6>
+                        </div>
+                        <ul class="list-unstyled ms-4 mt-3 text-muted small">
+                            <li>A) ${q.a}</li>
+                            <li>B) ${q.b}</li>
+                            <li>C) ${q.c}</li>
+                            <li>D) ${q.d}</li>
+                        </ul>
+                        <div class="correct-answer-box">
+                            <i class="bi bi-check-circle-fill me-2"></i> Correct Answer: <strong>${q.correct}</strong>
+                        </div>
+                    </div>`;
+                });
+            });
+        }
+
+        // --- CBT LOGIC ---
+        function prepareTest(name) {
+            toggleLoader(true);
+            const meta = appState.testData.find(t => t.testName === name);
+            
+            fetch(`${SCRIPT_URL}?action=getQuestions&sheetName=${meta.link}`)
+            .then(res => res.json()).then(qs => {
+                appState.activeTest = { meta: meta, questions: qs };
+                appState.answers = {};
+                appState.status = {};
+                appState.currentQ = 0;
+                
+                const now = new Date().getTime();
+                appState.timerEnd = now + (meta.time * 60 * 1000);
+                
+                appState.view = 'test-view';
+                saveSession();
+                resumeTestUI();
+                toggleLoader(false);
+            });
+        }
+
+        function resumeTestUI() {
+            loadView('test-view');
+            const t = appState.activeTest;
+            document.getElementById('testTitleDisplay').innerText = t.meta.testName;
+            renderPalette();
+            renderQuestion();
+            startTimer();
+        }
+
+        function renderQuestion() {
+            const idx = appState.currentQ;
+            const q = appState.activeTest.questions[idx];
+            
+            document.getElementById('qNum').innerText = idx + 1;
+            document.getElementById('qText').innerText = q.q;
+            const con = document.getElementById('optionsContainer');
+            con.innerHTML = '';
+            
+            ['a','b','c','d'].forEach(k => {
+                if(q[k]) {
+                    const isSelected = appState.answers[idx] === q[k]; 
+                    const btn = document.createElement('div');
+                    btn.className = `opt-btn ${isSelected ? 'selected' : ''}`;
+                    btn.innerHTML = `<span class="fw-bold me-2 text-uppercase">${k})</span> ${q[k]}`;
+                    btn.onclick = () => selectAns(idx, q[k]); 
+                    con.appendChild(btn);
+                }
+            });
+            updatePaletteStatus(idx);
+        }
+
+        function selectAns(idx, ansText) {
+            appState.answers[idx] = ansText; 
+            appState.status[idx] = 'attempted';
+            saveSession();
+            renderQuestion();
+            updatePaletteStatus(idx);
+        }
+
+        function markReview() {
+            appState.status[appState.currentQ] = 'review';
+            saveSession();
+            updatePaletteStatus(appState.currentQ);
+            navQ(1);
+        }
+
+        function navQ(dir) {
+            const next = appState.currentQ + dir;
+            if(next >= 0 && next < appState.activeTest.questions.length) {
+                if(!appState.answers[appState.currentQ] && appState.status[appState.currentQ] !== 'review') {
+                    appState.status[appState.currentQ] = 'skipped';
+                }
+                appState.currentQ = next;
+                saveSession();
+                renderQuestion();
+            }
+        }
+
+        function renderPalette() {
+            const p = document.getElementById('paletteGrid');
+            p.innerHTML = '';
+            appState.activeTest.questions.forEach((_, i) => {
+                const d = document.createElement('div');
+                d.className = 's-dot st-u';
+                d.innerText = i + 1;
+                d.id = `pal-${i}`;
+                d.onclick = () => { appState.currentQ = i; saveSession(); renderQuestion(); };
+                p.appendChild(d);
+            });
+            appState.activeTest.questions.forEach((_, i) => updatePaletteStatus(i));
+        }
+
+        function updatePaletteStatus(i) {
+            const d = document.getElementById(`pal-${i}`);
+            d.className = 's-dot';
+            if(appState.status[i] === 'review') d.classList.add('st-r');
+            else if(appState.answers[i]) d.classList.add('st-a');
+            else if(appState.status[i] === 'skipped') d.classList.add('st-s');
+            else d.classList.add('st-u');
+        }
+
+        function startTimer() {
+            clearInterval(timerInt);
+            timerInt = setInterval(() => {
+                const dist = appState.timerEnd - new Date().getTime();
+                if(dist < 0) {
+                    clearInterval(timerInt);
+                    document.getElementById('timerDisplay').innerText = "00:00";
+                    confirmSubmit(true);
+                } else {
+                    const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((dist % (1000 * 60)) / 1000);
+                    document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                }
+            }, 1000);
+        }
+
+        // --- SUBMIT ---
+        const submitModal = new bootstrap.Modal(document.getElementById('submitModal'));
+        function openSubmitModal() { submitModal.show(); }
+
+        function confirmSubmit(force = false) {
+            submitModal.hide();
+            clearInterval(timerInt);
+            toggleLoader(true);
+
+            let correct = 0, wrong = 0, attempted = 0;
+            appState.activeTest.questions.forEach((q, i) => {
+                const ans = appState.answers[i];
+                if(ans) {
+                    attempted++;
+                    const cleanAns = String(ans).trim().toLowerCase();
+                    const cleanCorrect = String(q.correct).trim().toLowerCase();
+                    if(cleanAns === cleanCorrect) correct++; else wrong++;
+                }
+            });
+            
+            const total = appState.activeTest.questions.length;
+            const unattempted = total - attempted;
+            const attempts = appState.history.filter(h => h.testName === appState.activeTest.meta.testName).length + 1;
+
+            const payload = {
+                action: 'submitTest',
+                name: appState.user.name,
+                username: appState.user.username,
+                testName: appState.activeTest.meta.testName,
+                attempt: attempts,
+                marks: correct,
+                correctCount: correct,
+                incorrectCount: wrong,
+                attemptedCount: attempted,
+                unattemptedCount: unattempted
+            };
+
+            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+            .then(res => res.json()).then(() => {
+                appState.activeTest = null;
+                appState.view = 'result-view';
+                saveSession();
+                toggleLoader(false);
+                loadView('result-view');
+                document.getElementById('resTotal').innerText = total;
+                document.getElementById('resAtt').innerText = attempted;
+                document.getElementById('resCorrect').innerText = correct;
+                document.getElementById('resIncorrect').innerText = wrong;
+            });
+        }
+
+        function exitToDash() {
+            appState.activeTest = null;
+            saveSession();
+            loadDashboard();
+        }
+    </script>
+</body>
+</html>
