@@ -74,6 +74,7 @@
             position: relative;
             overflow: hidden;
             transition: 0.3s;
+            width: 100%;
         }
         .btn-gradient:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3); }
 
@@ -85,8 +86,8 @@
             border-bottom: 1px solid rgba(255,255,255,0.5);
             display: flex; justify-content: space-between; align-items: center;
         }
-        .test-card { padding: 25px; height: 100%; position: relative; }
-        .test-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .test-card { padding: 25px; height: 100%; position: relative; cursor: pointer; transition: 0.3s; }
+        .test-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); background: rgba(255,255,255,0.95); }
         
         /* --- CBT --- */
         .cbt-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; height: calc(100vh - 120px); }
@@ -122,16 +123,6 @@
             margin-bottom: 20px;
         }
 
-        /* --- Solutions View --- */
-        .solution-card {
-            background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px;
-            border-left: 6px solid #00b894; box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-        }
-        .correct-answer-box {
-            background: #d1e7dd; color: #0f5132; padding: 12px;
-            border-radius: 10px; margin-top: 15px; font-weight: 600;
-        }
-
         /* --- Status Dots --- */
         .status-grid { display: flex; flex-wrap: wrap; gap: 8px; }
         .s-dot {
@@ -149,6 +140,32 @@
         .st-r { background: #ff7675; }
         .st-s { background: #6c5ce7; }
 
+        /* --- Solutions Styles --- */
+        .solution-card {
+            background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+            border-left: 5px solid #ccc; box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        }
+        .opt-row {
+            padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee;
+        }
+        /* Correct Answer Green */
+        .opt-correct {
+            background-color: #d1e7dd; border-color: #badbcc; color: #0f5132; font-weight: 600;
+        }
+        /* Student Wrong Red */
+        .opt-wrong {
+            background-color: #f8d7da; border-color: #f5c6cb; color: #842029; text-decoration: line-through;
+        }
+
+        /* --- Modal Glass --- */
+        .modal-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            border: none;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        }
+
         /* --- Loader --- */
         #loader {
             position: fixed; inset: 0;
@@ -163,15 +180,6 @@
             0% { transform: rotate(0deg); clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); background: var(--accent-color); }
             50% { transform: rotate(180deg); clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); background: #667eea; }
             100% { transform: rotate(360deg); clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); background: var(--accent-color); }
-        }
-
-        /* --- Modal --- */
-        .modal-glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            border-radius: 25px;
-            border: none;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
         }
 
         @media(max-width: 768px) {
@@ -328,7 +336,7 @@
                     <div class="col-6 col-md-3">
                         <div class="p-3 bg-light rounded-3">
                             <h3 class="fw-bold text-dark m-0" id="resAtt">0</h3>
-                            <small class="text-muted">Attempted</small>
+                            <small class="text-muted">Done</small>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
@@ -359,6 +367,28 @@
             </div>
     </div>
 
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-glass p-3">
+                <div class="modal-body text-center">
+                    <h3 class="fw-bold mb-3" id="modalTitle">Test Name</h3>
+                    <div class="d-flex justify-content-center gap-4 mb-4">
+                        <div class="text-center">
+                            <i class="bi bi-clock fs-2 text-primary"></i>
+                            <div class="fw-bold mt-2"><span id="modalTime">0</span> mins</div>
+                        </div>
+                        <div class="text-center">
+                            <i class="bi bi-question-circle fs-2 text-primary"></i>
+                            <div class="fw-bold mt-2"><span id="modalQs">0</span> Qs</div>
+                        </div>
+                    </div>
+                    <p class="text-muted small">Once you start, the timer will count down. If you close the window, the timer continues. The test auto-submits when time ends.</p>
+                    <button class="btn-gradient w-100" onclick="startTestFromModal()">START ASSESSMENT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="submitModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content modal-glass p-3">
@@ -379,7 +409,7 @@
 
     <script>
         // *** CONFIGURATION ***
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxARubiXML6TTa6RxOi-jEPssSrTMYFFhfV4TysgvuRPcFmOYOxx1aLnUL2VG8ksOk/exec'; // <--- PASTE YOUR URL HERE
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyoZdYASsWFrQ61UhhXC7DNWI2B8wkDqkXArRX1grTBkST5k9vDX55EGxtUaBI4Og/exec'; 
 
         // *** STATE MANAGEMENT ***
         let appState = {
@@ -395,34 +425,69 @@
         };
 
         const loader = document.getElementById('loader');
+        const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        const submitModal = new bootstrap.Modal(document.getElementById('submitModal'));
         let timerInt;
+        let selectedTestName = null;
 
-        window.addEventListener('load', restoreSession);
+        // *** INIT ***
+        window.addEventListener('load', () => {
+            restoreSession();
+        });
 
-        function saveSession() { localStorage.setItem('cbt_app_state_v3', JSON.stringify(appState)); }
+        // Using v9 to ensure fresh state with fixes
+        function saveSession() {
+            localStorage.setItem('cbt_app_state_v9', JSON.stringify(appState));
+        }
+
         function restoreSession() {
-            const stored = localStorage.getItem('cbt_app_state_v3');
+            const stored = localStorage.getItem('cbt_app_state_v9');
             if(stored) {
                 try {
                     appState = JSON.parse(stored);
                     if(appState.user) {
-                        if(appState.view === 'test-view') { loadView('test-view'); resumeTestUI(); }
-                        else loadDashboard(true);
-                    } else loadView('login-view');
-                } catch(e) { loadView('login-view'); }
-            } else loadView('login-view');
+                        if(appState.view === 'test-view' && appState.activeTest) {
+                            // Check if time expired while away/refreshed
+                            const now = Date.now();
+                            if (appState.timerEnd && now >= appState.timerEnd) {
+                                // Time is up, auto submit immediately
+                                toggleLoader(true);
+                                loadView('test-view'); // Ensure DOM exists
+                                setTimeout(() => confirmSubmit(true), 500); // Small delay to ensure load
+                            } else {
+                                loadView('test-view');
+                                resumeTestUI();
+                            }
+                        } else if(appState.view === 'dashboard-view') {
+                            loadDashboard(true); 
+                        } else {
+                            loadView('login-view');
+                        }
+                    } else {
+                        loadView('login-view');
+                    }
+                } catch(e) {
+                    localStorage.removeItem('cbt_app_state_v9');
+                    loadView('login-view');
+                }
+            } else {
+                loadView('login-view');
+            }
         }
 
         function loadView(id) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             appState.view = id;
-            if(id !== 'test-view') saveSession();
+            if(id !== 'test-view') saveSession(); 
         }
 
-        function toggleLoader(show) { show ? loader.classList.remove('d-none') : loader.classList.add('d-none'); }
+        function toggleLoader(show) {
+            if(show) loader.classList.remove('d-none');
+            else loader.classList.add('d-none');
+        }
 
-        // --- LOGIN ---
+        // *** LOGIN ***
         function togglePass() {
             const inp = document.getElementById('password');
             const icon = document.getElementById('eyeToggle');
@@ -435,28 +500,38 @@
             toggleLoader(true);
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
+
             fetch(`${SCRIPT_URL}?action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`)
-            .then(res => res.json()).then(data => {
+            .then(res => res.json())
+            .then(data => {
                 toggleLoader(false);
                 if(data.status && data.status !== 'error') {
                     appState.user = data;
                     saveSession();
                     loadDashboard();
-                } else document.getElementById('loginError').style.display = 'block';
-            });
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            }).catch(() => { toggleLoader(false); alert('Network Error. Check URL or Internet.'); });
         });
 
-        function logout() { localStorage.removeItem('cbt_app_state_v3'); location.reload(); }
+        function logout() {
+            localStorage.removeItem('cbt_app_state_v9');
+            location.reload();
+        }
 
-        // --- DASHBOARD ---
+        // *** DASHBOARD ***
         function loadDashboard(silent = false) {
             if(!silent) toggleLoader(true);
             loadView('dashboard-view');
+            
             document.getElementById('dashName').innerText = appState.user.name;
             document.getElementById('welcomeName').innerText = appState.user.name;
 
             fetch(`${SCRIPT_URL}?action=getDashboardData&username=${appState.user.username}`)
-            .then(res => res.json()).then(data => {
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'error') { alert(data.message); return; }
                 appState.testData = data.tests;
                 appState.history = data.history;
                 saveSession();
@@ -478,7 +553,7 @@
                 if(!isDone) {
                     html = `
                     <div class="col-md-6 animate-up">
-                        <div class="glass-panel test-card bg-white">
+                        <div class="glass-panel test-card bg-white" onclick="openTestDetails('${test.testName}')">
                             <span class="badge bg-danger position-absolute top-0 end-0 m-3 shadow-sm">NEW</span>
                             <h5 class="fw-bold text-primary">${test.testName}</h5>
                             <p class="text-muted small mb-3"><i class="bi bi-calendar"></i> ${test.testDate}</p>
@@ -486,7 +561,6 @@
                                 <span class="badge bg-light text-dark border"><i class="bi bi-clock"></i> ${test.time}m</span>
                                 <span class="badge bg-light text-dark border">${test.questions} Qs</span>
                             </div>
-                            <button class="btn-gradient w-100" onclick="prepareTest('${test.testName}')">START TEST</button>
                         </div>
                     </div>`;
                 } else {
@@ -498,10 +572,10 @@
                                 <h5 class="fw-bold text-success">${test.testName}</h5>
                                 <i class="bi bi-check-circle-fill text-success h5"></i>
                             </div>
-                            <p class="text-muted small">Score: <strong>${last.marks}</strong> | Att: ${last.attempted || 0}</p>
+                            <p class="text-muted small">Latest Score: <strong class="text-dark fs-5">${last.marks}</strong></p>
                             <div class="mt-4 d-flex gap-2">
-                                <button class="btn btn-outline-primary flex-grow-1 rounded-pill btn-sm" onclick="prepareTest('${test.testName}')">Retake</button>
-                                <button class="btn btn-success flex-grow-1 rounded-pill btn-sm" onclick="viewSolutions('${test.testName}')">Solutions</button>
+                                <button class="btn btn-outline-primary flex-grow-1 rounded-pill" onclick="openTestDetails('${test.testName}')">Retake</button>
+                                <button class="btn btn-success flex-grow-1 rounded-pill" onclick="viewSolutions('${test.testName}')">Solutions</button>
                             </div>
                         </div>
                     </div>`;
@@ -542,53 +616,40 @@
             });
         }
 
-        // --- SOLUTIONS ---
-        function viewSolutions(testName) {
-            toggleLoader(true);
-            const meta = appState.testData.find(t => t.testName === testName);
-            
-            fetch(`${SCRIPT_URL}?action=getQuestions&sheetName=${meta.link}`)
-            .then(res => res.json()).then(qs => {
-                toggleLoader(false);
-                loadView('solutions-view');
-                const con = document.getElementById('solutionsContainer');
-                con.innerHTML = `<div class="text-center mb-4"><h3 class="fw-bold">${testName}</h3><p class="text-muted">Detailed Solutions</p></div>`;
-                
-                qs.forEach((q, idx) => {
-                    con.innerHTML += `
-                    <div class="solution-card">
-                        <div class="d-flex gap-2">
-                            <span class="badge bg-primary h-100">Q${idx+1}</span>
-                            <h6 class="fw-bold lh-base">${q.q}</h6>
-                        </div>
-                        <ul class="list-unstyled ms-4 mt-3 text-muted small">
-                            <li>A) ${q.a}</li>
-                            <li>B) ${q.b}</li>
-                            <li>C) ${q.c}</li>
-                            <li>D) ${q.d}</li>
-                        </ul>
-                        <div class="correct-answer-box">
-                            <i class="bi bi-check-circle-fill me-2"></i> Correct Answer: <strong>${q.correct}</strong>
-                        </div>
-                    </div>`;
-                });
-            });
+        // *** DETAILS MODAL ***
+        function openTestDetails(name) {
+            selectedTestName = name;
+            const t = appState.testData.find(t => t.testName === name);
+            document.getElementById('modalTitle').innerText = t.testName;
+            document.getElementById('modalTime').innerText = t.time;
+            document.getElementById('modalQs').innerText = t.questions;
+            detailsModal.show();
         }
 
-        // --- CBT LOGIC ---
+        function startTestFromModal() {
+            detailsModal.hide();
+            prepareTest(selectedTestName);
+        }
+
+        // *** CBT LOGIC ***
         function prepareTest(name) {
             toggleLoader(true);
             const meta = appState.testData.find(t => t.testName === name);
             
             fetch(`${SCRIPT_URL}?action=getQuestions&sheetName=${meta.link}`)
-            .then(res => res.json()).then(qs => {
+            .then(res => res.json())
+            .then(qs => {
+                if(qs.status === 'error') { alert(qs.message); toggleLoader(false); return; }
+                
                 appState.activeTest = { meta: meta, questions: qs };
                 appState.answers = {};
                 appState.status = {};
                 appState.currentQ = 0;
                 
-                const now = new Date().getTime();
-                appState.timerEnd = now + (meta.time * 60 * 1000);
+                // FIXED: TIMER CALCULATION (Absolute timestamp)
+                const duration = Number(meta.time);
+                // Set the exact time the test should end
+                appState.timerEnd = Date.now() + (duration * 60 * 1000);
                 
                 appState.view = 'test-view';
                 saveSession();
@@ -601,6 +662,7 @@
             loadView('test-view');
             const t = appState.activeTest;
             document.getElementById('testTitleDisplay').innerText = t.meta.testName;
+            
             renderPalette();
             renderQuestion();
             startTimer();
@@ -612,24 +674,26 @@
             
             document.getElementById('qNum').innerText = idx + 1;
             document.getElementById('qText').innerText = q.q;
+            
             const con = document.getElementById('optionsContainer');
             con.innerHTML = '';
             
             ['a','b','c','d'].forEach(k => {
                 if(q[k]) {
-                    const isSelected = appState.answers[idx] === q[k]; 
+                    const sel = appState.answers[idx] === q[k]; // Match Text
                     const btn = document.createElement('div');
-                    btn.className = `opt-btn ${isSelected ? 'selected' : ''}`;
+                    btn.className = `opt-btn ${sel ? 'selected' : ''}`;
                     btn.innerHTML = `<span class="fw-bold me-2 text-uppercase">${k})</span> ${q[k]}`;
                     btn.onclick = () => selectAns(idx, q[k]); 
                     con.appendChild(btn);
                 }
             });
+            
             updatePaletteStatus(idx);
         }
 
-        function selectAns(idx, ansText) {
-            appState.answers[idx] = ansText; 
+        function selectAns(idx, ans) {
+            appState.answers[idx] = ans;
             appState.status[idx] = 'attempted';
             saveSession();
             renderQuestion();
@@ -663,7 +727,11 @@
                 d.className = 's-dot st-u';
                 d.innerText = i + 1;
                 d.id = `pal-${i}`;
-                d.onclick = () => { appState.currentQ = i; saveSession(); renderQuestion(); };
+                d.onclick = () => {
+                    appState.currentQ = i;
+                    saveSession();
+                    renderQuestion();
+                };
                 p.appendChild(d);
             });
             appState.activeTest.questions.forEach((_, i) => updatePaletteStatus(i));
@@ -672,50 +740,66 @@
         function updatePaletteStatus(i) {
             const d = document.getElementById(`pal-${i}`);
             d.className = 's-dot';
+            
             if(appState.status[i] === 'review') d.classList.add('st-r');
             else if(appState.answers[i]) d.classList.add('st-a');
             else if(appState.status[i] === 'skipped') d.classList.add('st-s');
             else d.classList.add('st-u');
         }
 
+        // *** TIMER & AUTO-SUBMIT FIX ***
         function startTimer() {
-            clearInterval(timerInt);
-            timerInt = setInterval(() => {
-                const dist = appState.timerEnd - new Date().getTime();
-                if(dist < 0) {
+            if (timerInt) clearInterval(timerInt);
+
+            const tick = () => {
+                const now = Date.now();
+                const dist = appState.timerEnd - now;
+                
+                if(dist <= 0) {
                     clearInterval(timerInt);
                     document.getElementById('timerDisplay').innerText = "00:00";
-                    confirmSubmit(true);
+                    // Only auto-submit if we haven't already
+                    if(appState.activeTest) {
+                        confirmSubmit(true);
+                    }
                 } else {
-                    const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
-                    const s = Math.floor((dist % (1000 * 60)) / 1000);
-                    document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                    const m = Math.floor(dist / 60000); 
+                    const s = Math.floor((dist % 60000) / 1000);
+                    document.getElementById('timerDisplay').innerText = 
+                        `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
                 }
-            }, 1000);
+            };
+
+            // Run immediately to handle "close tab" catch up
+            tick();
+            timerInt = setInterval(tick, 1000);
         }
 
-        // --- SUBMIT ---
-        const submitModal = new bootstrap.Modal(document.getElementById('submitModal'));
-        function openSubmitModal() { submitModal.show(); }
+        // *** SUBMIT ***
+        function openSubmitModal() {
+            submitModal.show();
+        }
 
         function confirmSubmit(force = false) {
             submitModal.hide();
-            clearInterval(timerInt);
+            if(timerInt) clearInterval(timerInt);
             toggleLoader(true);
+
+            // Safety check
+            if(!appState.activeTest) return;
 
             let correct = 0, wrong = 0, attempted = 0;
             appState.activeTest.questions.forEach((q, i) => {
                 const ans = appState.answers[i];
                 if(ans) {
                     attempted++;
-                    const cleanAns = String(ans).trim().toLowerCase();
-                    const cleanCorrect = String(q.correct).trim().toLowerCase();
-                    if(cleanAns === cleanCorrect) correct++; else wrong++;
+                    // Normalize Text Check
+                    if(String(ans).trim().toLowerCase() === String(q.correct).trim().toLowerCase()) correct++; 
+                    else wrong++;
                 }
             });
-            
-            const total = appState.activeTest.questions.length;
-            const unattempted = total - attempted;
+
+            // Count attempts
             const attempts = appState.history.filter(h => h.testName === appState.activeTest.meta.testName).length + 1;
 
             const payload = {
@@ -728,20 +812,66 @@
                 correctCount: correct,
                 incorrectCount: wrong,
                 attemptedCount: attempted,
-                unattemptedCount: unattempted
+                unattemptedCount: appState.activeTest.questions.length - attempted
             };
 
-            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
-            .then(res => res.json()).then(() => {
+            fetch(SCRIPT_URL, {
+                method: 'POST', body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(() => {
                 appState.activeTest = null;
                 appState.view = 'result-view';
                 saveSession();
+                
                 toggleLoader(false);
                 loadView('result-view');
-                document.getElementById('resTotal').innerText = total;
-                document.getElementById('resAtt').innerText = attempted;
+                document.getElementById('resTotal').innerText = payload.attemptedCount + payload.unattemptedCount;
+                document.getElementById('resAtt').innerText = payload.attemptedCount;
                 document.getElementById('resCorrect').innerText = correct;
                 document.getElementById('resIncorrect').innerText = wrong;
+                // resScore wasn't in HTML, assuming user meant Correct or created logic elsewhere. 
+                // Removed resScore line to prevent errors if ID missing. Correct is displayed.
+            })
+            .catch(() => {
+                toggleLoader(false);
+                alert("Submission failed. Please check internet and try again.");
+            });
+        }
+
+        // *** SOLUTIONS VIEW ***
+        function viewSolutions(testName) {
+            toggleLoader(true);
+            const meta = appState.testData.find(t => t.testName === testName);
+            
+            fetch(`${SCRIPT_URL}?action=getQuestions&sheetName=${meta.link}`)
+            .then(res => res.json()).then(qs => {
+                toggleLoader(false);
+                loadView('solutions-view');
+                const con = document.getElementById('solutionsContainer');
+                con.innerHTML = `<h3 class="text-center mb-4 fw-bold">${testName} Analysis</h3>`;
+                
+                qs.forEach((q, idx) => {
+                    const userAns = appState.answers && appState.answers[idx] ? String(appState.answers[idx]).trim().toLowerCase() : null;
+                    const correctAns = String(q.correct).trim().toLowerCase();
+                    const check = (opt) => String(opt).trim().toLowerCase();
+                    
+                    let aC="", bC="", cC="", dC="";
+                    
+                    if(check(q.a)===correctAns) aC="opt-correct"; else if(check(q.a)===userAns) aC="opt-wrong";
+                    if(check(q.b)===correctAns) bC="opt-correct"; else if(check(q.b)===userAns) bC="opt-wrong";
+                    if(check(q.c)===correctAns) cC="opt-correct"; else if(check(q.c)===userAns) cC="opt-wrong";
+                    if(check(q.d)===correctAns) dC="opt-correct"; else if(check(q.d)===userAns) dC="opt-wrong";
+
+                    con.innerHTML += `
+                    <div class="solution-card">
+                         <h6 class="fw-bold mb-3">Q${idx+1}: ${q.q}</h6>
+                         <div class="opt-row ${aC}">A) ${q.a}</div>
+                         <div class="opt-row ${bC}">B) ${q.b}</div>
+                         <div class="opt-row ${cC}">C) ${q.c}</div>
+                         <div class="opt-row ${dC}">D) ${q.d}</div>
+                    </div>`;
+                });
             });
         }
 
