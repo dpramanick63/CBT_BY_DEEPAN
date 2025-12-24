@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Portal | By Deepan</title>
+    <title>Exam Portal | Student Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -545,40 +545,69 @@
             const list = document.getElementById('testList');
             list.innerHTML = '';
             
+            // Current Date for Lock Logic
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
             appState.testData.forEach(test => {
                 const attempts = appState.history.filter(h => h.testName === test.testName);
                 const isDone = attempts.length > 0;
                 let html = '';
 
-                if(!isDone) {
-                    html = `
+                // DATE LOCK LOGIC
+                // Assuming date format DD/MM/YYYY in Google Sheet
+                const parts = test.testDate.split('/'); // Split 26/12/2024
+                // Create date object: Year, MonthIndex (0-11), Day
+                const testDateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+                
+                // If the test date is in the future
+                if (testDateObj > today) {
+                     // LOCKED VIEW
+                     html = `
                     <div class="col-md-6 animate-up">
-                        <div class="glass-panel test-card bg-white" onclick="openTestDetails('${test.testName}')">
-                            <span class="badge bg-danger position-absolute top-0 end-0 m-3 shadow-sm">NEW</span>
-                            <h5 class="fw-bold text-primary">${test.testName}</h5>
-                            <p class="text-muted small mb-3"><i class="bi bi-calendar"></i> ${test.testDate}</p>
+                        <div class="glass-panel test-card bg-light text-muted" style="cursor: not-allowed; opacity: 0.7; border: 1px dashed #ccc;">
+                            <span class="badge bg-secondary position-absolute top-0 end-0 m-3 shadow-sm"><i class="bi bi-lock-fill"></i> LOCKED</span>
+                            <h5 class="fw-bold text-secondary">${test.testName}</h5>
+                            <p class="text-muted small mb-3"><i class="bi bi-calendar"></i> Unlocks on: <span class="fw-bold">${test.testDate}</span></p>
                             <div class="d-flex gap-2 mb-3">
-                                <span class="badge bg-light text-dark border"><i class="bi bi-clock"></i> ${test.time}m</span>
-                                <span class="badge bg-light text-dark border">${test.questions} Qs</span>
+                                <span class="badge bg-light text-secondary border"><i class="bi bi-clock"></i> ${test.time}m</span>
+                                <span class="badge bg-light text-secondary border">${test.questions} Qs</span>
                             </div>
+                            <button class="btn btn-secondary w-100 rounded-pill btn-sm" disabled>Coming Soon</button>
                         </div>
                     </div>`;
                 } else {
-                    const last = attempts[attempts.length-1];
-                    html = `
-                    <div class="col-md-6 animate-up">
-                        <div class="glass-panel test-card bg-white" style="border-left:5px solid #00b894;">
-                            <div class="d-flex justify-content-between">
-                                <h5 class="fw-bold text-success">${test.testName}</h5>
-                                <i class="bi bi-check-circle-fill text-success h5"></i>
+                    // UNLOCKED VIEW (Normal Logic)
+                    if(!isDone) {
+                        html = `
+                        <div class="col-md-6 animate-up">
+                            <div class="glass-panel test-card bg-white" onclick="openTestDetails('${test.testName}')">
+                                <span class="badge bg-danger position-absolute top-0 end-0 m-3 shadow-sm">NEW</span>
+                                <h5 class="fw-bold text-primary">${test.testName}</h5>
+                                <p class="text-muted small mb-3"><i class="bi bi-calendar"></i> ${test.testDate}</p>
+                                <div class="d-flex gap-2 mb-3">
+                                    <span class="badge bg-light text-dark border"><i class="bi bi-clock"></i> ${test.time}m</span>
+                                    <span class="badge bg-light text-dark border">${test.questions} Qs</span>
+                                </div>
                             </div>
-                            <p class="text-muted small">Latest Score: <strong class="text-dark fs-5">${last.marks}</strong></p>
-                            <div class="mt-4 d-flex gap-2">
-                                <button class="btn btn-outline-primary flex-grow-1 rounded-pill" onclick="openTestDetails('${test.testName}')">Retake</button>
-                                <button class="btn btn-success flex-grow-1 rounded-pill" onclick="viewSolutions('${test.testName}')">Solutions</button>
+                        </div>`;
+                    } else {
+                        const last = attempts[attempts.length-1];
+                        html = `
+                        <div class="col-md-6 animate-up">
+                            <div class="glass-panel test-card bg-white" style="border-left:5px solid #00b894;">
+                                <div class="d-flex justify-content-between">
+                                    <h5 class="fw-bold text-success">${test.testName}</h5>
+                                    <i class="bi bi-check-circle-fill text-success h5"></i>
+                                </div>
+                                <p class="text-muted small">Latest Score: <strong class="text-dark fs-5">${last.marks}</strong></p>
+                                <div class="mt-4 d-flex gap-2">
+                                    <button class="btn btn-outline-primary flex-grow-1 rounded-pill" onclick="openTestDetails('${test.testName}')">Retake</button>
+                                    <button class="btn btn-success flex-grow-1 rounded-pill" onclick="viewSolutions('${test.testName}')">Solutions</button>
+                                </div>
                             </div>
-                        </div>
-                    </div>`;
+                        </div>`;
+                    }
                 }
                 list.innerHTML += html;
             });
